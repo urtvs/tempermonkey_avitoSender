@@ -25,7 +25,7 @@ async function menu() {
     let divClasses = element.attr('class');
     let aClasses = element.find('a').attr('class');
 
-    let started = localStorage.getItem('started');
+    let started = localStorage.getItem('startedMsgSender');
     if(started == null || started == 'false'){
         if(getUrl(2) == 'messenger'){
             readMessages();
@@ -63,12 +63,12 @@ async function start(){
 
         return;
     }
-    localStorage.setItem('started', true);
+    localStorage.setItem('startedMsgSender', true);
 
     getItem();
 }
 async function stop(){
-    localStorage.setItem('started', false);
+    localStorage.setItem('startedMsgSender', false);
 
     window.location.reload();
 }
