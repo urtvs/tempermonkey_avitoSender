@@ -104,6 +104,14 @@ async function getItem(args = {}){
 
     console.log('Получены данные с API сервера');
 
+    if(item.results.avitoLink.stat){
+        let text = $('#messenger-start').text();
+        $('#messenger-start').text(`${text}. ${item.results.avitoLink.stat.numSend}/${item.results.avitoLink.stat.numDone}`);
+
+        localStorage.setItem('numSend', item.results.avitoLink.stat.numSend);
+        localStorage.setItem('numDone', item.results.avitoLink.stat.numDone);
+    }
+
     item = item.results.avitoLink.result[0];
     console.table(item);
 
@@ -118,6 +126,13 @@ async function getItem(args = {}){
 async function parse(args = {}){
     let avitoItem = JSON.parse(localStorage.getItem('avitoMessengerData'));
     
+    if(localStorage.getItem('numSend') != null && localStorage.getItem('numSend') != ''){
+        await timeout(1000);
+        let text = $('#messenger-stop').text();
+        $('#messenger-stop').text(`${text}. ${localStorage.getItem('numSend')}/${localStorage.getItem('numDone')}`);
+
+    }
+
     let announcementId = await elementCreated('[data-marker="item-view/item-id"]');
     if(elementCreatedStatus !== true){
         console.error('Не удалось найти ID объявления');
@@ -156,7 +171,8 @@ async function parse(args = {}){
     }
     
     clickFromScript = true;
-    $('[data-marker="messenger-button/button"]').click();
+    $('[data-marker="messenger-button/button"]:eq(0)').click();
+    $('[data-marker="messenger-button/button"]:eq(1)').click();
     clickFromScript = false;
 
     console.log('Кнопка нажата. Ждём 2 секунды до полного открытия. Затем проверяем, тому ли человеку пишет');
@@ -188,7 +204,7 @@ async function parse(args = {}){
 
     console.log('Имя открытого диалога совпадает с объявлением. Начинаем писать.');
 
-    sendMessage(avitoItem.msg);
+    sendMessage(avitoItem.message);
 }
 
 //рекурсия - плохо, но будет рекурсия
@@ -346,4 +362,10 @@ async function readMessagesFromMinichat(){
     console.log(messages.join("\n"));
 
     ajax(backendApiMsg, {messengerID: messengerID, messages: messages});
+}
+async function openLink(url) {
+    // window.location.href = url;
+    window.open(url);
+    await(500);
+    window.close();
 }

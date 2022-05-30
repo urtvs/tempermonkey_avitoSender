@@ -1,6 +1,16 @@
-const version = 1;
-const backendApi = `https://a.unirenter.ru/b24/api/avito.php?do=avitoSendMsg&ah=`;
-const backendApiMsg = 'https://a.unirenter.ru/b24/api/avito.php?do=avitoSendAnswer&ah=';
+let seconds = 0;
+setInterval(async () => {
+    seconds++;
+    if(seconds == 40){
+        console.error('Не было совершенно действий в течение 40 секунд. Обновление страницы');
+        await timeout(2000);
+        openLink(window.location.href);
+    }
+}, 1000);
+
+const version = 2;
+const backendApi = `https://a.unirenter.ru/b24/api/avito.php?do=avitoSendMsg&isDev=1&ah=`;
+const backendApiMsg = 'https://a.unirenter.ru/b24/api/avito.php?do=avitoSendAnswer&isDev=1&ah=';
 
 let clickFromScript = false;
 
