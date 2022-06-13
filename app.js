@@ -9,13 +9,17 @@ $('body').on('click', 'a[data-marker="channels/channelLink"]', readMessagesFromM
 
 let msgs = [];
 
+let functions;
+
 async function menu() {
+    functions = new functionsClass();
+
     //Это таймаут для проверки наличия элемента
     //У авито используются разные классы на разных страницах, поэтому будем заниматься гаданием на кофейной гуще
     console.log('Проверяем загрузку меню');
-    let element = await elementCreated('.index-add-button-wrapper-s0SLe, .header-button-wrapper-2UC-r');
+    let element = await functions.elementCreated('.index-add-button-wrapper-s0SLe, .header-button-wrapper-2UC-r');
 
-    if (elementCreatedStatus !== true) {
+    if (functions.elementCreatedStatus !== true) {
         console.error('Не удалось найти элементы меню');
         return;
     }
@@ -27,16 +31,25 @@ async function menu() {
 
     let started = localStorage.getItem('startedMsgSender');
     if(started == null || started == 'false'){
-        if(getUrl(2) == 'messenger'){
+        if(functions.getUrl(2) == 'messenger'){
             readMessages();
         }
         started = false;
     }else{
         started = true;
         
-        if(getUrl(1) && getUrl(2) != 'messenger'){
+        if(functions.getUrl(1) && functions.getUrl(2) != 'messenger'){
             parse();
-        }else if(!getUrl(1)){
+        }else if(functions.getUrl(2) == 'messenger' && functions.getUrl(4)) {
+            await functions.timeout(3000);
+            let message = JSON.parse(localStorage.getItem('avitoMessengerData'));
+            if(message.avitoChatID != functions.getUrl(4)) {
+                console.error('Открытый чат не совпадает с ИД из локального хранилища');
+                return;
+            }
+
+            sendMessage(message.msg);
+        }else if(!functions.getUrl(1)){
             getItem();
         }
     }
@@ -77,7 +90,7 @@ async function getItem(args = {}){
     let item = {};
 
     if(Object.keys(args) == 0){
-        item = await get(backendApi);
+        item = await functions.get(functions.backendApi);
     }else{
         item = args;
     }
@@ -92,53 +105,58 @@ async function getItem(args = {}){
         return;
     }
 
-    if(!item.results.avitoLink){
+    if(!item.results.avitoSendMsg){
         console.error('Ошибка получения данных с сервера #3');
         return;
     }
 
-    if(!item.results.avitoLink.result){
+    if(!item.results.avitoSendMsg.result){
         console.error('Ошибка получения данных с сервера #4');
         return;
     }
 
     console.log('Получены данные с API сервера');
 
-    if(item.results.avitoLink.stat){
+    if(item.results.avitoSendMsg.stat){
         let text = $('#messenger-start').text();
-        $('#messenger-start').text(`${text}. ${item.results.avitoLink.stat.numSend}/${item.results.avitoLink.stat.numDone}`);
+        $('#messenger-start').text(`${text}. ${item.results.avitoSendMsg.stat.numSend}/${item.results.avitoSendMsg.stat.numDone}`);
 
-        localStorage.setItem('numSend', item.results.avitoLink.stat.numSend);
-        localStorage.setItem('numDone', item.results.avitoLink.stat.numDone);
+        localStorage.setItem('numSend', item.results.avitoSendMsg.stat.numSend);
+        localStorage.setItem('numDone', item.results.avitoSendMsg.stat.numDone);
     }
 
-    item = item.results.avitoLink.result[0];
+    item = item.results.avitoSendMsg.result[0];
     console.table(item);
 
     localStorage.setItem('avitoMessengerData', JSON.stringify(item));
     console.log('Данные сохранены в локальное хранилище');
 
     console.log('Ожидание 3 секунды, затем переход в карточку товара');
-    await timeout(3000);
-    window.location.href = item.avitoUrl;
+    await functions.timeout(3000);
+
+    if(item.avitoUrl){
+        window.location.href = item.avitoUrl;
+    } else if (item.avitoChatID) {
+        window.location.href = 'https://www.avito.ru/profile/messenger/channel/' + item.avitoChatID;
+    }
 }
 
 async function parse(args = {}){
     let avitoItem = JSON.parse(localStorage.getItem('avitoMessengerData'));
     
     if(localStorage.getItem('numSend') != null && localStorage.getItem('numSend') != ''){
-        await timeout(1000);
+        await functions.timeout(1000);
         let text = $('#messenger-stop').text();
         $('#messenger-stop').text(`${text}. ${localStorage.getItem('numSend')}/${localStorage.getItem('numDone')}`);
 
     }
 
-    let announcementId = await elementCreated('[data-marker="item-view/item-id"]');
-    if(elementCreatedStatus !== true){
+    let announcementId = await functions.elementCreated('[data-marker="item-view/item-id"]');
+    if(functions.elementCreatedStatus !== true){
         console.error('Не удалось найти ID объявления');
         return;
     }
-    announcementId = announcementId.text().replace('№', '').trim();
+    announcementId = announcementId.text().replace('№', '').replace(',', '').trim();
 
     if(avitoItem.avitoID != announcementId){
         console.error('ID не совпадает с полученым по API');
@@ -151,23 +169,18 @@ async function parse(args = {}){
     if(!args.skip){
         console.log('Страница с товаром загружена. Ожидаем 5 секунд, затем проверяем кнопку');
 
-        await timeout(5000);
+        await functions.timeout(5000);
 
-        if(!$('.js-messenger-button').length){
-            console.error('Кнопка сообщений не найдена');
-            error('noSendButtong');
-            return;
-        }
         if(!$('[data-marker="messenger-button/button"]').length){
             console.error('Кнопка сообщений не найдена');
-            error('noSendButtong');
+            functions.error('noSendButtong');
             return;
         }
         console.log('Кнопка сообщений найдена. Выжидаем 15 секунд');
-        await timeout(15000);
+        await functions.timeout(15000);
     }else{
         console.log('Функция отправки сообщения запущена второй раз. Ожидаем 5 секунд и пытаемся повторно кликнуть');
-        await timeout(5000);
+        await functions.timeout(5000);
     }
     
     clickFromScript = true;
@@ -176,7 +189,7 @@ async function parse(args = {}){
     clickFromScript = false;
 
     console.log('Кнопка нажата. Ждём 2 секунды до полного открытия. Затем проверяем, тому ли человеку пишет');
-    await timeout(2000);
+    await functions.timeout(2000);
 
     if(!$('[data-marker="header/authorName"]').length){
         console.error('Мини чат не был открыт.');
@@ -192,10 +205,8 @@ async function parse(args = {}){
     }
 
     let userNameInMessenger = $('[data-marker="header/authorName"]').text().trim();
-    let userNameInPage = $('.seller-info-name a').text().trim();
-    if(!userNameInPage){
-        userNameInPage = $('.seller-info-name').text().trim();
-    }
+    let userNameInPage = $('[data-marker="header/authorName"]').text().trim();
+
     console.log(userNameInMessenger, userNameInPage);
     if(userNameInMessenger != userNameInPage){
         console.error('Имя открытого диалога не совпадает с объявлением');
@@ -204,7 +215,7 @@ async function parse(args = {}){
 
     console.log('Имя открытого диалога совпадает с объявлением. Начинаем писать.');
 
-    sendMessage(avitoItem.message);
+    sendMessage(avitoItem.msg);
 }
 
 //рекурсия - плохо, но будет рекурсия
@@ -225,43 +236,51 @@ async function sendMessage(msg = [], i = 0){
         let appendText = `${$('[data-marker="reply/input"]').text()}${word}`;
         // $('[data-marker="reply/input"]').text(appendText).val(appendText);
         document.execCommand('insertText', false, word); //vscode метит execCommand как устаревшую, но нам норм
-        await timeout(Math.floor(Math.random() * 400) + 2);
+        await functions.timeout(Math.floor(Math.random() * 400) + 2);
     }    
     textarea.dispatchEvent(new Event('change', {bubbles: true}));
 
-    await timeout(1000);
+    await functions.timeout(1000);
 
-    if(!$('.channel-bottom-base-sendButtonElement-2Y0Jd').length){
+    if(!$('[data-marker="reply/send"]').length){
         console.error('Кнопка отправки сообщения не найдена');
         return;
     }
 
-    if($('.channel-bottom-base-sendButtonElement-2Y0Jd').hasClass('channel-bottom-base-sendButton_disabled-ZQ-vl')){
+    if($('[data-marker="reply/send"]').hasClass('channel-bottom-base-sendButton_disabled-ZQ-vl')){
         console.error('Кнопка отправки недоступна');
         return;
     }
 
-    $('.channel-bottom-base-sendButtonElement-2Y0Jd').click();
+    $('[data-marker="reply/send"]').click();
     msgs[i] = 1;
     console.log('Сообщение отправили. Ждём тайм-аут и проверяем');
 
-    await timeout(5000);
+    await functions.timeout(5000);
 
     //Проверка сообщения
     //Если там иконка ошибки, которая обычно возникает из-за номера телефона, то кликаем на переотправку
-    $('.messages-history-scrollContent-p3n_S .message-text-design_new-3q1tp').each(async (index, item) => {
+    $('[data-marker="messagesHistory/list"] [data-marker="message"]').each(async (index, item) => {
         let text = $(item).text().trim();
-        if(text != msg[i]){
+
+        if(text != msg[i].trim()){
             return;
         }
-        let element = $(item).closest('.message-base-content-3uH8y');
-        if(element.find('[aria-label="Отправить снова"]').length){
+        // let element = $(item).closest('.message-base-content-3uH8y');
+        // if(element.find('[aria-label="Отправить снова"]').length){
+        //     console.log('Сообщение найдено, но в нём ошибка. Кликаем на переотправку');
+        //     element.find('[aria-label="Отправить снова"]').click();
+        //     msgs[i] = 2;
+        // }
+        let element = $(item).find('[data-marker="message/error"]');
+
+        if(element.length){
             console.log('Сообщение найдено, но в нём ошибка. Кликаем на переотправку');
-            element.find('[aria-label="Отправить снова"]').click();
+            element.click();
             msgs[i] = 2;
         }
 
-        await timeout(2000);
+        await functions.timeout(2000);
     });
 
     i++;
@@ -269,6 +288,7 @@ async function sendMessage(msg = [], i = 0){
         console.log('Пишем следующее сообщение');
         sendMessage(msg, i);
     }else{
+        await functions.timeout(2000);
         console.log('Все сообщения отправлены. Проверяем их');
         sendMessageComplete(msg);
     }
@@ -296,28 +316,35 @@ async function sendMessageComplete(msg){
     console.log('Все сообщения отправлены. Можно переходить к отправке по API');
 
     let localItem = JSON.parse(localStorage.getItem('avitoMessengerData'));
-    let messengerID = $('[data-marker="mini-messenger/messenger-page-link"]').attr('href').replace('https://www.avito.ru', '');
-    result['messengerID']   = getUrl(4, messengerID);
+
+    let messengerID;
+    let findChatID = $('[data-marker="mini-messenger/messenger-page-link"]');
+    if(findChatID.length) {
+        messengerID = findChatID.attr('href').replace('https://www.avito.ru', '');
+    }else{
+        messengerID = functions.getUrl(4);
+    }
+    result['messengerID']   = functions.getUrl(4, messengerID);
     result['avitoID']       = localItem['avitoID'];
     result['id']            = localItem['id'];
 
     console.table(result);
 
-    let data = await ajax(backendApi, result);
+    let data = await functions.ajax(functions.backendApi, result);
     console.log(`%c Всё готово, идём дальше`, 'color: green');
     getItem(data);
 }
 
 async function readMessages(){
-    if(getUrl(3) != 'channel' && !getUrl(4)){
+    if(functions.getUrl(3) != 'channel' && !functions.getUrl(4)){
         return;
     }
 
     console.log('Читаем сообщения');
-    let messengerID = getUrl(4);
+    let messengerID = functions.getUrl(4);
     console.log(`ID диалога: ${messengerID}`);
 
-    await timeout(5000);
+    await functions.timeout(5000);
 
     let messages = [];
 
@@ -334,19 +361,20 @@ async function readMessages(){
     console.log('Все сообщения собраны');
     console.log(messages.join("\n"));
 
-    ajax(backendApiMsg, {messengerID: messengerID, messages: messages});
+    functions.ajax(functions.backendApiMsg, {messengerID: messengerID, messages: messages});
 }
 
 async function readMessagesFromMinichat(){
-    if(getUrl(3) == 'channel' && getUrl(4)){
+    if(functions.getUrl(3) == 'channel' && functions.getUrl(4)){
+        readMessages()
         return;
     }
-    await timeout(3000);
+    await functions.timeout(3000);
     console.log('Читаем сообщения');
-    let messengerID = getUrl(4, $('[data-marker="mini-messenger/messenger-page-link"]').attr('href').replace('https://www.avito.ru', ''));
+    let messengerID = functions.getUrl(4, $('[data-marker="mini-messenger/messenger-page-link"]').attr('href').replace('https://www.avito.ru', ''));
     console.log(`ID диалога: ${messengerID}`);
 
-    await timeout(2000);
+    await functions.timeout(2000);
 
     let messages = [];
 
@@ -361,7 +389,7 @@ async function readMessagesFromMinichat(){
     console.log('Все сообщения собраны');
     console.log(messages.join("\n"));
 
-    ajax(backendApiMsg, {messengerID: messengerID, messages: messages});
+    functions.ajax(functions.backendApiMsg, {messengerID: messengerID, messages: messages});
 }
 async function openLink(url) {
     // window.location.href = url;
@@ -369,3 +397,10 @@ async function openLink(url) {
     await(500);
     window.close();
 }
+
+//Слушаем события происходящие на странице. Если открывается диалог - передаём информацию на сервер
+$('body').on('click', '[data-marker="channels/channelLink"]', async e => {
+    await functions.timeout(1000);
+    
+    let chatId = functions.getUrl(4);
+});
