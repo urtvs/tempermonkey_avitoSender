@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name         Avito Messenger
+// @name         avitoSender
 // @namespace    http://tampermonkey.net/
 // @version      1.0
 // @description  Мое описание
@@ -7,9 +7,7 @@
 // @match        https://*.avito.ru/*
 // @grant        none
 // @require      https://code.jquery.com/jquery-3.4.1.min.js
-// @require      https://cdn.jsdelivr.net/npm/jquery.growl@1.3.5/javascripts/jquery.growl.min.js
-// @require      https://tarasovdev.ru/js/m/functions.js?v=12
-// @require      https://tarasovdev.ru/js/m/app.js?v=13
+// @require      https://tarasovdev.ru/js/m/avitoSender.js?v=13123123123411233
 
 // @run-at document-end
 // ==/UserScript==
@@ -18,5 +16,16 @@
 var DEBUG_MODE = 1;
 
 var userID = 1;
-var versionID=2;
 var hash = '';
+
+let domain = 'a-dev.unirenter.ru';
+
+//Дополнительные параметры
+let queryArgs = {
+    ah: hash,
+    userID: userID,
+    isDev: 2,
+    devTmp: 'media'
+};
+
+avitoSender();
