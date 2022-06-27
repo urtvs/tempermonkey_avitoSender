@@ -53,15 +53,15 @@ async function avitoSender() {
             getItem();
         }
 
-        console.log(`Добавляем таймер действий. Срок - ${maxSeconds} секунд`);
-        setInterval(async () => {
-            seconds++;
-            if(seconds == maxSeconds){
-                console.error('Не было совершенно действий в течение 40 секунд. Обновление страницы');
-                await timeout(2000);
-                openLink(window.location.href);
-            }
-        }, 1000);
+        // console.log(`Добавляем таймер действий. Срок - ${maxSeconds} секунд`);
+        // setInterval(async () => {
+        //     seconds++;
+        //     if(seconds == maxSeconds){
+        //         console.error('Не было совершенно действий в течение 40 секунд. Обновление страницы');
+        //         await timeout(2000);
+        //         openLink(window.location.href);
+        //     }
+        // }, 1000);
     }
 
     //Добавляем кнопки управления.
