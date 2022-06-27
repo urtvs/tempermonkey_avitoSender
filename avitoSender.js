@@ -1,7 +1,7 @@
 async function avitoSender() {
     let seconds = 0;
     const maxSeconds = 40;
-    let version = 4;
+    let version = 5;
 
     let elementCreatedInerations = 0;
     let elementCreatedStatus = true;
@@ -20,16 +20,6 @@ async function avitoSender() {
     let backendApi = `https://${domain}/b24/api/avito.php?1=1`;
         
     console.log(`Версия avitoSender: ${version}`);
-
-    console.log(`Добавляем таймер действий. Срок - ${maxSeconds} секунд`);
-    setInterval(async () => {
-        seconds++;
-        if(seconds == maxSeconds){
-            console.error('Не было совершенно действий в течение 40 секунд. Обновление страницы');
-            await timeout(2000);
-            openLink(window.location.href);
-        }
-    }, 1000);
 
     console.log('Генерируем меню');
     let element = await elementCreated('.index-add-button-wrapper-s0SLe, .header-button-wrapper-2UC-r');
@@ -62,13 +52,24 @@ async function avitoSender() {
         }else if(!getUrl(1)){
             getItem();
         }
+
+        console.log(`Добавляем таймер действий. Срок - ${maxSeconds} секунд`);
+        setInterval(async () => {
+            seconds++;
+            if(seconds == maxSeconds){
+                console.error('Не было совершенно действий в течение 40 секунд. Обновление страницы');
+                await timeout(2000);
+                openLink(window.location.href);
+            }
+        }, 1000);
     }
 
     //Добавляем кнопки управления.
+    await timeout(3000);
     element.after(`
         ${started === false
-        ? `<div class="${divClasses}"><a href="#" id="messenger-start" class="${aClasses}" style="background:red;">Отправить</a></div>`
-        : `<div class="${divClasses}"><a href="#" id="messenger-stop" class="${aClasses}" style="background:red;">Остановить</a></div>`}
+        ? `<div class="${divClasses} avitoSender"><a href="#" id="messenger-start" class="${aClasses}" style="background:red;">Отправить</a></div>`
+        : `<div class="${divClasses} avitoSender"><a href="#" id="messenger-stop" class="${aClasses}" style="background:red;">Остановить</a></div>`}
     `);
 
     if($('[data-marker="header/menu-profile"]').length || $('[data-marker="header/username-button"]').length){
@@ -76,6 +77,17 @@ async function avitoSender() {
     }
 
     console.log('Добавляем элементам callback функции');
+
+    await timeout(1000);
+    //Проверяем наличие кнопки. если она удалилась, добавляем повторно
+    if(!$('.avitoSender').length) {
+        await timeout(3000);
+        element.after(`
+            ${started === false
+            ? `<div class="${divClasses} avitoSender"><a href="#" id="messenger-start" class="${aClasses}" style="background:red;">Отправить</a></div>`
+            : `<div class="${divClasses} avitoSender"><a href="#" id="messenger-stop" class="${aClasses}" style="background:red;">Остановить</a></div>`}
+        `);    
+    }
     //bug fix
     $('body').on('submit', '.channel-bottom-base-form-1xsja', e => e.preventDefault());
     $('body').on('click', 'a#messenger-start', start);
