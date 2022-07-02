@@ -1,7 +1,7 @@
 async function avitoSender() {
     let seconds = 0;
     const maxSeconds = 40;
-    let version = 5;
+    let version = 6;
 
     let elementCreatedInerations = 0;
     let elementCreatedStatus = true;
@@ -252,17 +252,11 @@ async function avitoSender() {
         
         const textarea = document.querySelector('[data-marker="reply/input"]');
         textarea.focus();
-
-        for(let iteration = 0; iteration <= msg[i].length; iteration++){
-            let word = msg[i][iteration];
-            if(!word) continue;
-
-            let appendText = `${$('[data-marker="reply/input"]').text()}${word}`;
-            // $('[data-marker="reply/input"]').text(appendText).val(appendText);
-            document.execCommand('insertText', false, word); //vscode метит execCommand как устаревшую, но нам норм
-            await timeout(Math.floor(Math.random() * 400) + 2);
-        }    
-        textarea.dispatchEvent(new Event('change', {bubbles: true}));
+        textarea.textContent = msg[i];
+        textarea.value = msg[i];
+        setTimeout(() => {
+            textarea.dispatchEvent(new Event('change', {bubbles: true}));
+        }, 0);
 
         await timeout(1000);
 
