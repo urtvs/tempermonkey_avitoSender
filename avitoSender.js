@@ -1,13 +1,15 @@
 async function avitoSender() {
     let seconds = 0;
     const maxSeconds = 40;
-    let version = 6;
+    let version = 7;
 
     let elementCreatedInerations = 0;
     let elementCreatedStatus = true;
     let isAuth= false;
 
     let msgs = [];
+
+    let awaitInterval;
 
     console.log('Инициализация avitoSender');
 
@@ -136,8 +138,18 @@ async function avitoSender() {
 
         if(!item.results.avitoSendMsg.result){
             console.error('Ошибка получения данных с сервера #4');
+
+            //Запускаем таймер, если он не запущен
+            if(!awaitInterval) {
+                awaitInterval = setInterval(() => {
+                    console.log('Ответ от сервера пуст. Запускаем интервал');
+                    getItem();       
+                }, 1000);
+            }
+
             return;
         }
+        clearInterval(awaitInterval);
 
         console.log('Получены данные с API сервера');
 
