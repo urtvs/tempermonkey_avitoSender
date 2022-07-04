@@ -1,7 +1,7 @@
 async function avitoSender() {
     let seconds = 0;
     const maxSeconds = 40;
-    let version = 7;
+    let version = 8;
 
     let elementCreatedInerations = 0;
     let elementCreatedStatus = true;
@@ -144,7 +144,7 @@ async function avitoSender() {
                 awaitInterval = setInterval(() => {
                     console.log('Ответ от сервера пуст. Запускаем интервал');
                     getItem();       
-                }, 1000);
+                }, messageCheckInterval*1000);
             }
 
             return;

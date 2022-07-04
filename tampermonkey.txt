@@ -20,6 +20,8 @@ var hash = '';
 
 let domain = 'a-dev.unirenter.ru';
 
+let messageCheckInterval = 3;
+
 //Дополнительные параметры
 let queryArgs = {
     ah: hash,
