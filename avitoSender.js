@@ -1,7 +1,7 @@
 async function avitoSender() {
     let seconds = 0;
     const maxSeconds = 40;
-    let version = 8;
+    let version = 9;
 
     let elementCreatedInerations = 0;
     let elementCreatedStatus = true;
@@ -263,6 +263,9 @@ async function avitoSender() {
         console.log(`Ввод текста: %c ${msg[i]}`, 'color: green');
         
         const textarea = document.querySelector('[data-marker="reply/input"]');
+        if(!textarea){
+            return;
+        }
         textarea.focus();
         textarea.textContent = msg[i];
         textarea.value = msg[i];
@@ -363,6 +366,8 @@ async function avitoSender() {
 
         let data = await ajax(backendApi, result);
         console.log(`%c Всё готово, идём дальше`, 'color: green');
+        
+        await timeout(20);
         getItem(data);
     }
 
