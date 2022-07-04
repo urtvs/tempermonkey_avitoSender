@@ -167,8 +167,8 @@ async function avitoSender() {
         localStorage.setItem('avitoMessengerData', JSON.stringify(item));
         console.log('Данные сохранены в локальное хранилище');
 
-        console.log('Ожидание 3 секунды, затем переход в карточку товара');
-        await timeout(3000);
+        console.log('Ожидание 20 секунд, затем переход в карточку товара');
+        await timeout(20000);
 
         if(item.avitoUrl){
             window.location.href = item.avitoUrl;
